@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useGame } from '../context/GameContext.jsx'
 import { Navigate } from 'react-router-dom'
+import { getRandomQuestion } from '../lib/questionBank.js'
 
 export default function WriteQuestions() {
   const { room, sessionToken, submitQuestions, startPlaying, error } = useGame()
@@ -8,14 +9,11 @@ export default function WriteQuestions() {
   const [q1, setQ1] = useState('')
   const [q2, setQ2] = useState('')
   const [q3, setQ3] = useState('')
-  
+
   if (error) return <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center"><div className="border-4 border-red-500 p-4 text-red-500 font-bold mb-4 bg-red-50">Error: {error}</div><a href="/" className="font-bold underline decoration-4 hover:bg-black hover:text-white p-2 transition-all">Go Back</a></div>
   if (!room) return <div className="min-h-screen flex items-center justify-center p-4 font-bold animate-pulse text-2xl">Loading...</div>
   
-  // Handled by Lobby or refresh, but just in case
   if (room.status === 'lobby') return <Navigate to="/lobby" />
-  
-  // The crucial redirect to the next phase
   if (room.status === 'playing') return <Navigate to="/playing" />
 
   const isHost = room.hostSessionToken === sessionToken
@@ -24,7 +22,6 @@ export default function WriteQuestions() {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!q1.trim() || !q2.trim() || !q3.trim()) return
-    
     submitQuestions([
       { text: q1, type: 'serious' },
       { text: q2, type: 'fun' },
@@ -39,39 +36,76 @@ export default function WriteQuestions() {
       <div className="w-full max-w-lg mb-8 p-6 border-8 border-black shadow-[8px_8px_0_0_#000] bg-white">
         {!me?.submittedQuestions ? (
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+
+            {/* Serious Question */}
             <div>
               <label className="block font-bold text-xl mb-2 uppercase">Serious Question</label>
-              <input 
-                type="text" 
-                value={q1}
-                onChange={e => setQ1(e.target.value)}
-                className="w-full border-4 border-black p-4 text-lg outline-none focus:bg-yellow-50 font-medium placeholder-gray-400"
-                placeholder="Ex: What is your biggest regret?"
-                required
-              />
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={q1}
+                  onChange={e => setQ1(e.target.value)}
+                  className="flex-1 border-4 border-black p-4 text-lg outline-none focus:bg-yellow-50 font-medium placeholder-gray-400"
+                  placeholder="Ex: What is your biggest regret?"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setQ1(getRandomQuestion('serious'))}
+                  title="Random câu hỏi nghiêm túc"
+                  className="border-4 border-black px-4 bg-yellow-300 hover:bg-yellow-400 font-black text-xl transition-colors flex-shrink-0"
+                >
+                  🎲
+                </button>
+              </div>
             </div>
+
+            {/* Fun Question */}
             <div>
               <label className="block font-bold text-xl mb-2 uppercase">Fun Question</label>
-              <input 
-                type="text" 
-                value={q2}
-                onChange={e => setQ2(e.target.value)}
-                className="w-full border-4 border-black p-4 text-lg outline-none focus:bg-pink-50 font-medium placeholder-gray-400"
-                placeholder="Ex: What animal would you ride into battle?"
-                required
-              />
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={q2}
+                  onChange={e => setQ2(e.target.value)}
+                  className="flex-1 border-4 border-black p-4 text-lg outline-none focus:bg-pink-50 font-medium placeholder-gray-400"
+                  placeholder="Ex: What animal would you ride into battle?"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setQ2(getRandomQuestion('fun'))}
+                  title="Random câu hỏi vui nhộn"
+                  className="border-4 border-black px-4 bg-pink-300 hover:bg-pink-400 font-black text-xl transition-colors flex-shrink-0"
+                >
+                  🎲
+                </button>
+              </div>
             </div>
+
+            {/* Normal Question */}
             <div>
               <label className="block font-bold text-xl mb-2 uppercase">Normal Question</label>
-              <input 
-                type="text" 
-                value={q3}
-                onChange={e => setQ3(e.target.value)}
-                className="w-full border-4 border-black p-4 text-lg outline-none focus:bg-blue-50 font-medium placeholder-gray-400"
-                placeholder="Ex: What is your favorite movie?"
-                required
-              />
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={q3}
+                  onChange={e => setQ3(e.target.value)}
+                  className="flex-1 border-4 border-black p-4 text-lg outline-none focus:bg-blue-50 font-medium placeholder-gray-400"
+                  placeholder="Ex: What is your favorite movie?"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setQ3(getRandomQuestion('normal'))}
+                  title="Random câu hỏi bình thường"
+                  className="border-4 border-black px-4 bg-blue-300 hover:bg-blue-400 font-black text-xl transition-colors flex-shrink-0"
+                >
+                  🎲
+                </button>
+              </div>
             </div>
+
             <button 
               type="submit" 
               className="w-full bg-black text-white font-black text-2xl p-6 mt-4 uppercase tracking-widest hover:bg-white hover:text-black border-4 border-black transition-colors"

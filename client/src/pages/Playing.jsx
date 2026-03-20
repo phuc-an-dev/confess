@@ -1,17 +1,20 @@
 import { useEffect, useState, useRef } from 'react'
 import { useGame } from '../context/GameContext.jsx'
 import { Navigate } from 'react-router-dom'
-// Import socket STATICALLY so useEffect cleanup works correctly.
-// Using dynamic import inside useEffect means the cleanup function returned
-// from the .then() is never seen by React → listeners stack up → meme fires twice.
 import { socket } from '../lib/socket.js'
+
+const TYPE_STYLES = {
+  serious: 'bg-yellow-300 border-black text-black',
+  fun:     'bg-pink-300 border-black text-black',
+  normal:  'bg-blue-300 border-black text-black',
+}
 
 export default function Playing() {
   const { room, sessionToken } = useGame()
   const [currentQuestion, setCurrentQuestion] = useState(null)
   const [currentPlayerName, setCurrentPlayerName] = useState('')
   const [activeMeme, setActiveMeme] = useState(null)
-  // All hooks ABOVE every early return
+  const [showEndConfirm, setShowEndConfirm] = useState(false)
   const lastMemeTime = useRef(0)
   const memeTimer = useRef(null)
 
@@ -23,23 +26,26 @@ export default function Playing() {
 
     const onMeme = ({ memeId, senderName }) => {
       setActiveMeme({ memeId, senderName })
-      // Clear any existing timer so spamming replaces the current meme
       if (memeTimer.current) clearTimeout(memeTimer.current)
       memeTimer.current = setTimeout(() => setActiveMeme(null), 3000)
     }
 
+    const onQuestionsEmpty = () => {
+      setShowEndConfirm(true)
+    }
+
     socket.on('question:random', onQuestion)
     socket.on('meme:broadcast', onMeme)
+    socket.on('questions:empty', onQuestionsEmpty)
 
-    // Properly registered cleanup — React WILL call this on unmount
     return () => {
       socket.off('question:random', onQuestion)
       socket.off('meme:broadcast', onMeme)
+      socket.off('questions:empty', onQuestionsEmpty)
       if (memeTimer.current) clearTimeout(memeTimer.current)
     }
   }, [])
 
-  // Early returns AFTER all hooks
   if (!room) return null
   if (room.status === 'writing') return <Navigate to="/writing" />
 
@@ -47,6 +53,11 @@ export default function Playing() {
 
   const handleNext = () => {
     socket.emit('round:next', { code: room.code, sessionToken })
+  }
+
+  const handleConfirmEnd = () => {
+    setShowEndConfirm(false)
+    socket.emit('round:confirm-end', { code: room.code, sessionToken })
   }
 
   const sendMeme = (memeId) => {
@@ -58,17 +69,30 @@ export default function Playing() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-white text-black font-sans p-4 flex flex-col items-center">
+
+      {/* ── Question card ── */}
       {currentQuestion ? (
-        <div className="w-full max-w-2xl border-8 border-black p-8 md:p-12 text-center bg-white shadow-[16px_16px_0_0_#000] z-10 mb-8 mt-10 transition-all">
-          <h2 className="text-xl md:text-2xl font-black uppercase tracking-[0.2em] mb-8 border-b-4 border-black pb-2 inline-block shadow-[4px_4px_0_0_#000]">
-            {currentPlayerName} IS ANSWERING
-          </h2>
-          <p className="text-3xl md:text-6xl font-black uppercase leading-tight mb-8">
-            "{currentQuestion.text}"
-          </p>
-          <span className="inline-block border-4 border-black px-6 py-2 font-black uppercase tracking-widest text-sm md:text-base bg-black text-white">
+        <div className="w-full max-w-2xl border-8 border-black bg-white shadow-[16px_16px_0_0_#000] z-10 mb-8 mt-10 transition-all relative">
+
+          {/* Type label — top-left corner */}
+          <span className={`absolute top-0 left-0 border-r-4 border-b-4 border-black px-4 py-1 font-black uppercase tracking-widest text-sm ${TYPE_STYLES[currentQuestion.type] ?? 'bg-gray-200'}`}>
             {currentQuestion.type}
           </span>
+
+          <div className="p-8 md:p-12 pt-12 text-center">
+            {/* Player name — big & bold, most prominent element */}
+            <div className="mb-6 flex items-center justify-center gap-4 flex-wrap">
+              <span className="inline-block bg-black text-white font-black text-2xl md:text-4xl uppercase tracking-widest px-6 py-3 shadow-[6px_6px_0_0_#555]">
+                {currentPlayerName}
+              </span>
+              <span className="font-black text-xl md:text-3xl uppercase tracking-[0.2em] text-gray-500">IS ANSWERING</span>
+            </div>
+
+            {/* Question text */}
+            <p className="text-2xl md:text-5xl font-black uppercase leading-tight">
+              "{currentQuestion.text}"
+            </p>
+          </div>
         </div>
       ) : (
         <div className="w-full max-w-2xl border-8 border-black p-12 text-center z-10 font-black text-2xl uppercase mt-10 shadow-[12px_12px_0_0_#000]">
@@ -76,6 +100,7 @@ export default function Playing() {
         </div>
       )}
 
+      {/* ── Host: Next button ── */}
       {isHost && (
         <div className="z-20 w-full max-w-2xl mt-4">
           <button
@@ -87,20 +112,21 @@ export default function Playing() {
         </div>
       )}
 
+      {/* ── React panel (30 slots) ── */}
       <div className="z-20 w-full max-w-2xl mt-auto pt-8 border-t-8 border-black">
         <h3 className="font-black text-2xl mb-4 uppercase inline-block border-b-4 border-black">React</h3>
-        <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
-          {Array.from({ length: 10 }).map((_, i) => (
+        <div className="grid grid-cols-6 md:grid-cols-10 gap-2">
+          {Array.from({ length: 30 }).map((_, i) => (
             <button
               key={i}
-              onClick={() => sendMeme(`meme-${String(i+1).padStart(2,'0')}`)}
+              onClick={() => sendMeme(`meme-${String(i + 1).padStart(2, '0')}`)}
               className="aspect-square border-4 border-black bg-gray-100 hover:bg-gray-200 transition-colors p-0 overflow-hidden flex items-center justify-center relative group"
             >
               <img
-                src={`/memes/meme-${String(i+1).padStart(2,'0')}.png`}
-                alt={`Meme ${i+1}`}
+                src={`/memes/meme-${String(i + 1).padStart(2, '0')}.png`}
+                alt={`Meme ${i + 1}`}
                 className="w-full h-full object-cover"
-                onError={(e) => { e.target.style.display='none' }}
+                onError={(e) => { e.target.style.display = 'none' }}
               />
               <span className="absolute inset-0 bg-black/50 text-white font-bold opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-xs">SEND</span>
             </button>
@@ -108,7 +134,7 @@ export default function Playing() {
         </div>
       </div>
 
-      {/* Single large centered meme — replaces itself on spam */}
+      {/* ── Meme overlay ── */}
       {activeMeme && (
         <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center">
           <div key={activeMeme.memeId + Date.now()} className="animate-popin flex flex-col items-center">
@@ -117,12 +143,30 @@ export default function Playing() {
                 src={`/memes/${activeMeme.memeId}.png`}
                 alt="Meme"
                 className="w-full h-full object-cover"
-                onError={(e) => { e.target.style.display='none' }}
+                onError={(e) => { e.target.style.display = 'none' }}
               />
             </div>
             <div className="bg-black text-white font-black text-2xl md:text-4xl uppercase px-8 py-3 border-8 border-t-0 border-black shadow-[8px_8px_0_0_#555]">
               {activeMeme.senderName}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Host modal: questions empty confirm ── */}
+      {showEndConfirm && isHost && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70">
+          <div className="bg-white border-8 border-black shadow-[16px_16px_0_0_#000] p-10 max-w-md w-full text-center">
+            <h2 className="text-3xl font-black uppercase mb-2">Out of Questions</h2>
+            <p className="text-lg font-bold mb-8 text-gray-600">
+              All questions have been used. Confirm to go back to the writing phase.
+            </p>
+            <button
+              onClick={handleConfirmEnd}
+              className="w-full bg-black text-white font-black text-xl p-5 uppercase tracking-widest border-4 border-black hover:bg-white hover:text-black transition-colors"
+            >
+              Confirm &amp; Write New Questions
+            </button>
           </div>
         </div>
       )}

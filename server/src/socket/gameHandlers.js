@@ -80,10 +80,8 @@ export function setupGameHandlers(io, socket) {
 
     const q = pickRandomQuestion(room.questions)
     if (!q) {
-      room.status = 'writing'
-      room.players.forEach(p => p.submittedQuestions = false)
-      await room.save()
-      io.to(code).emit('room:updated', { room })
+      // Notify host only — wait for confirmation before going back to writing
+      socket.emit('questions:empty')
       return
     }
 
@@ -99,6 +97,19 @@ export function setupGameHandlers(io, socket) {
     
     await room.save()
     io.to(code).emit('question:random', { question: q, currentPlayerName })
+  })
+
+  // Host confirmed they want to go back to writing phase
+  socket.on('round:confirm-end', async (payload) => {
+    const { code, sessionToken } = payload
+    const room = await Room.findOne({ code })
+    if (!room) return
+    if (room.hostSessionToken !== sessionToken) return
+
+    room.status = 'writing'
+    room.players.forEach(p => p.submittedQuestions = false)
+    await room.save()
+    io.to(code).emit('room:updated', { room })
   })
 
   socket.on('meme:send', async (payload) => {
