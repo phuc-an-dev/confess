@@ -115,7 +115,7 @@ export default function Playing() {
       {/* ── React panel (30 slots) ── */}
       <div className="z-20 w-full max-w-2xl mt-auto pt-8 border-t-8 border-black">
         <h3 className="font-black text-2xl mb-4 uppercase inline-block border-b-4 border-black">React</h3>
-        <div className="grid grid-cols-6 md:grid-cols-10 gap-2">
+        <div className="grid grid-cols-3 gap-3">
           {Array.from({ length: 30 }).map((_, i) => (
             <button
               key={i}
