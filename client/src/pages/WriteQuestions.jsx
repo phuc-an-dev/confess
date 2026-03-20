@@ -53,7 +53,7 @@ export default function WriteQuestions() {
             {/* Serious Question */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="font-bold text-xl uppercase">Serious Question</label>
+                <label className="font-bold text-sm uppercase">Serious Question</label>
                 <button type="button" onClick={() => setQ1(getRandomQuestion('serious'))}
                   className="border-4 border-black px-3 py-1 bg-yellow-300 hover:bg-yellow-400 font-black text-sm uppercase tracking-wide transition-colors">
                   🎲 Random
@@ -67,7 +67,7 @@ export default function WriteQuestions() {
             {/* Fun Question */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="font-bold text-xl uppercase">Fun Question</label>
+                <label className="font-bold text-sm uppercase">Fun Question</label>
                 <button type="button" onClick={() => setQ2(getRandomQuestion('fun'))}
                   className="border-4 border-black px-3 py-1 bg-pink-300 hover:bg-pink-400 font-black text-sm uppercase tracking-wide transition-colors">
                   🎲 Random
@@ -81,7 +81,7 @@ export default function WriteQuestions() {
             {/* Normal Question */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="font-bold text-xl uppercase">Normal Question</label>
+                <label className="font-bold text-sm uppercase">Normal Question</label>
                 <button type="button" onClick={() => setQ3(getRandomQuestion('normal'))}
                   className="border-4 border-black px-3 py-1 bg-blue-300 hover:bg-blue-400 font-black text-sm uppercase tracking-wide transition-colors">
                   🎲 Random
