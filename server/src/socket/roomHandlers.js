@@ -13,16 +13,19 @@ export function setupRoomHandlers(io, socket) {
     socket.join(code)
 
     let player = room.players.find(p => p.sessionToken === sessionToken)
+    const ipAddress = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address
 
     if (player) {
       player.socketId = socket.id
-      player.name = playerName
+      if (playerName) player.name = playerName
+      player.ipAddress = ipAddress
     } else {
       const isSpectator = room.status === 'playing'
       player = {
         sessionToken,
         socketId: socket.id,
         name: playerName,
+        ipAddress,
         submittedQuestions: false,
         isSpectator
       }

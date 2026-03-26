@@ -12,6 +12,15 @@ export function GameProvider({ children }) {
     socket.on('room:updated', ({ room }) => setRoom(room))
     socket.on('error', ({ message }) => setError(message))
     
+    // Auto-rejoin on F5 / mount if we have a saved code
+    const savedCode = localStorage.getItem('roomCode')
+    if (savedCode) {
+      socket.emit('room:join', { 
+        code: savedCode, 
+        sessionToken: getSessionToken() 
+      })
+    }
+
     return () => {
       socket.off('room:updated')
       socket.off('error')
@@ -20,11 +29,19 @@ export function GameProvider({ children }) {
   
   const joinRoom = (code, playerName) => {
     setError(null)
+    localStorage.setItem('roomCode', code.toUpperCase())
+    if (playerName) localStorage.setItem('playerName', playerName)
     socket.emit('room:join', { 
       code: code.toUpperCase(), 
       playerName, 
       sessionToken: getSessionToken() 
     })
+  }
+
+  const leaveRoom = () => {
+    localStorage.removeItem('roomCode')
+    setRoom(null)
+    // could also emit leave but basic state clear is enough for F5 resilience
   }
 
   const startWriting = () => {
@@ -43,7 +60,7 @@ export function GameProvider({ children }) {
   }
 
   return (
-    <GameContext.Provider value={{ room, error, joinRoom, startWriting, submitQuestions, startPlaying, sessionToken: getSessionToken() }}>
+    <GameContext.Provider value={{ room, error, joinRoom, leaveRoom, startWriting, submitQuestions, startPlaying, sessionToken: getSessionToken() }}>
       {children}
     </GameContext.Provider>
   )

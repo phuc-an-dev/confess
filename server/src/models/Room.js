@@ -8,14 +8,20 @@ const roomSchema = new mongoose.Schema({
     sessionToken: String,
     socketId: String,
     name: String,
+    ipAddress: String, // [NEW] added for tracking
     submittedQuestions: { type: Boolean, default: false },
     isSpectator: { type: Boolean, default: false }
   }],
   questions: [{
+    questionBankId: { type: mongoose.Schema.Types.ObjectId, ref: 'QuestionBank' }, // [NEW] link to global bank
     authorSessionToken: String,
     text: String,
     type: { type: String },
-    used: { type: Boolean, default: false }
+    used: { type: Boolean, default: false },
+    ratings: [{
+      playerSessionToken: String,
+      type: { type: String, enum: ['deep', 'funny', 'good', 'bad'] }
+    }]
   }],
   turnOrder: [String],
   currentTurnIndex: { type: Number, default: 0 },
