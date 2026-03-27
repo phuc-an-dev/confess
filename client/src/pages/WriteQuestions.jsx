@@ -126,14 +126,14 @@ export default function WriteQuestions() {
                   >
                     <Dices size={12} /> Random
                   </Button>
-                  <Button 
+                  {/* <Button 
                     type="button" 
                     onClick={() => openHistory('serious', setQ1)}
                     variant="secondary"
                     className="px-3 py-1 text-[10px] shadow-[2px_2px_0_0_#000]"
                   >
                     <History size={12} /> History
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
               <textarea value={q1} onChange={e => setQ1(e.target.value)} rows={2}
@@ -154,14 +154,14 @@ export default function WriteQuestions() {
                   >
                     <Dices size={12} /> Random
                   </Button>
-                  <Button 
+                  {/* <Button 
                     type="button" 
                     onClick={() => openHistory('fun', setQ2)}
                     variant="secondary"
                     className="px-3 py-1 text-[10px] shadow-[2px_2px_0_0_#000]"
                   >
                     <History size={12} /> History
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
               <textarea value={q2} onChange={e => setQ2(e.target.value)} rows={2}
@@ -182,14 +182,14 @@ export default function WriteQuestions() {
                   >
                     <Dices size={12} /> Random
                   </Button>
-                  <Button 
+                  {/* <Button 
                     type="button" 
                     onClick={() => openHistory('normal', setQ3)}
                     variant="secondary"
                     className="px-3 py-1 text-[10px] shadow-[2px_2px_0_0_#000]"
                   >
                     <History size={12} /> History
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
               <textarea value={q3} onChange={e => setQ3(e.target.value)} rows={2}
